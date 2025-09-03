@@ -15,10 +15,10 @@
     "extra": {
         "laravel": {
             "providers": [
-                "Pangpang\\Shipping\\ShippingServiceProvider"
+                "PangPang\\Shipping\\ShippingServiceProvider"
             ],
             "aliases": {
-                "Shipping": "Pangpang\\Shipping\\Facades\\Shipping"
+                "Shipping": "PangPang\\Shipping\\Facades\\Shipping"
             }
         }
     },
