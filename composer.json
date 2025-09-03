@@ -1,0 +1,31 @@
+{
+    "name": "pangpang/shipping",
+    "description": "物流整合套件",
+    "type": "library",
+    "require": {
+        "guzzlehttp/guzzle": "7.10.0",
+        "league/oauth2-client": "^2.7"
+    },
+    "license": "MIT",
+    "autoload": {
+        "psr-4": {
+            "PangPang\\Shipping\\": "src/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Pangpang\\Shipping\\ShippingServiceProvider"
+            ],
+            "aliases": {
+                "Shipping": "Pangpang\\Shipping\\Facades\\Shipping"
+            }
+        }
+    },
+    "authors": [
+        {
+            "name": "pangpang"
+        }
+    ],
+    "minimum-stability": "dev"
+}
