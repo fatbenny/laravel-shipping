@@ -2,10 +2,9 @@
 
 namespace PangPang\Shipping\Drivers;
 
+use PangPang\Shipping\Responses\ShippingResponse;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
-use GuzzleHttp\Exception\ClientException;
-use GuzzleHttp\Exception\ServerException;
 use Illuminate\Support\Facades\Cache;
 
 class FedExDriver extends AbstractDriver
@@ -65,23 +64,20 @@ class FedExDriver extends AbstractDriver
     }
     public function create(array $data)
     {
-        $payload = $this->buildCreatePayload($data);
-        $response = $this->client->post('ship/v1/openshipments/create', [
-            'json' => $payload
-        ]);
-        return $this->handleCreateResponse($response);
-    }
-    protected function handleCreateResponse($response)
-    {
-        $data = json_decode($response->getBody(), true);
-        dd($data);
-        return [
-            'success' => true,
-            'provider' => 'FedEx',
-            'tracking_number' => $data['output']['transactionShipments'][0]['masterTrackingNumber'],
-            // 'label_url' => $data['output']['transactionShipments'][0]['pieceResponses'][0]['packageDocuments'][0]['url'],
-            'raw_response' => $data
-        ];
+        try {
+            $payload = $this->buildCreatePayload($data);
+            $response = $this->client->post('ship/v1/openshipments/create', [
+                'json' => $payload
+            ]);
+
+            return ShippingResponse::success($response, function ($data) {
+                return [
+                    'tracking_number' => $data['output']['transactionShipments'][0]['masterTrackingNumber'] ?? null,
+                ];
+            });
+        } catch (RequestException $e) {
+            return ShippingResponse::error($e);
+        }
     }
 
 
@@ -92,20 +88,10 @@ class FedExDriver extends AbstractDriver
             $response = $this->client->post('country/v1/postal/validate', [
                 'json' => $data,
             ]);
-
-            $statusCode = $response->getStatusCode();
-            $body = json_decode((string) $response->getBody(), true);
-
-            return [
-                'status' => $statusCode,
-                'data' => $body,
-            ];
+            return ShippingResponse::success($response);
 
         } catch (RequestException $e) {
-            return [
-                'status' => $e->getResponse()->getStatusCode(),
-                'error' => json_decode((string) $e->getResponse()->getBody(), true)
-            ];
+            return ShippingResponse::error($e);
         }
     }
     public function track(string $trackingNumber)
@@ -122,15 +108,14 @@ class FedExDriver extends AbstractDriver
                 ]
             ]
         ]);
-
-        return $this->handleTrackResponse($response);
+        return ShippingResponse::success($response);
     }
 
     public function cancel(string $trackingNumber)
     {
         // FedEx 取消實作
     }
-
+    //要求寄件前費率資訊以判斷成本。 
     public function getRates(array $data)
     {
         $payload = $this->buildRatePayload($data);
@@ -139,25 +124,10 @@ class FedExDriver extends AbstractDriver
             'json' => $payload
         ]);
 
-        return $this->handleRateResponse($response);
+        return ShippingResponse::success($response);
     }
-    protected function handleTrackResponse($response)
-    {
-        // 實作追蹤回應處理
-    }
-
-    protected function handleCancelResponse($response)
-    {
-        // 實作取消回應處理
-    }
-
     protected function buildRatePayload(array $data)
     {
         // 實作費率查詢 payload
-    }
-
-    protected function handleRateResponse($response)
-    {
-        // 實作費率查詢回應處理
     }
 }
