@@ -15,6 +15,61 @@
 
 ##📦 範例用法
 
+# 郵遞區號驗證
+```
+Route::get('/test-shipping/validate/PostalCode', function () {
+    $result = Shipping::driver('fedex')->validate([
+        "carrierCode" => "FDXG",
+        "countryCode" => "US",
+        "stateOrProvinceCode" => "TN",
+        "postalCode" => "38116",
+        "shipDate" => "2025-09-04",
+        "checkForMismatch" => true
+    ]);
+
+    return [
+        'fedex' => $result
+    ];
+});
+```
+
+# 要求寄件前費率資訊以判斷成本
+```
+Route::get('/test-shipping/rate', function () {
+    $result = Shipping::driver('fedex')->getRates([
+        "shipper" => [
+            "address" => [
+                "postalCode" => "38116",
+                "countryCode" => "US",
+            ],
+        ],
+        "recipients" => [
+            "address" => [
+                "postalCode" => "38116",
+                "countryCode" => "US",
+            ],
+        ],
+        "pickupType" => "DROPOFF_AT_FEDEX_LOCATION",
+        "rateRequestType" => [
+            "ACCOUNT",
+            "LIST"
+        ],
+        'packages' => [
+            [
+                'weight' => [
+                    'units' => 'LB',
+                    'value' => '20'
+                ],
+            ]
+        ],
+    ]);
+
+    return [
+        'fedex' => $result
+    ];
+});
+```
+
 # 建立運送單
 ```
 use PangPang\Shipping\Facades\Shipping;
@@ -68,26 +123,4 @@ Route::get('/test-shipping', function () {
     ];
 });
 ```
-
-
-
-# 郵遞區號驗證
-```
-Route::get('/test-shipping/validate/PostalCode', function () {
-    $result = Shipping::driver('fedex')->validate([
-        "carrierCode" => "FDXG",
-        "countryCode" => "US",
-        "stateOrProvinceCode" => "TN",
-        "postalCode" => "38116",
-        "shipDate" => "2025-09-04",
-        "checkForMismatch" => true
-    ]);
-
-    return [
-        'fedex' => $result
-    ];
-});
-```
-
-
 
