@@ -38,6 +38,13 @@ class ShippingServiceProvider extends ServiceProvider
         $this->publishes([
             __DIR__ . '/../config/shipping.php' => config_path('shipping.php'),
         ], 'shipping-config');
+
+        $this->mergeConfigFrom(
+            __DIR__ . '/../config/fedex.php',
+            'fedex'
+        );
+        $this->loadRoutesFrom(__DIR__ . '/../routes/shipping.php');
+        $this->loadViewsFrom(__DIR__ . '/../resources/views', 'shipping');
     }
 
 }

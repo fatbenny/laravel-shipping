@@ -3,7 +3,7 @@
 namespace PangPang\Shipping\Drivers;
 
 use PangPang\Shipping\Payloads\FedEx\Rate\QuoteRatePayload;
-use PangPang\Shipping\Payloads\FedEx\Shipment\ShipmentFullSchemaPayload;
+use PangPang\Shipping\Payloads\FedEx\Shipment\ShipmentPayloads;
 use PangPang\Shipping\Payloads\FedEx\Validate\ValidatePostalPayload;
 use PangPang\Shipping\Responses\ShippingResponse;
 use GuzzleHttp\Client;
@@ -12,6 +12,9 @@ use Illuminate\Support\Facades\Cache;
 
 class FedExDriver extends AbstractDriver
 {
+    private $test_url = 'https://apis-sandbox.fedex.com';
+    private $live_url = 'https://apis.fedex.com';
+    private const Carriers = 'FedEx';
     protected function initializeClient()
     {
         $this->client = new Client([
@@ -44,22 +47,15 @@ class FedExDriver extends AbstractDriver
             return $data['access_token'];
         });
     }
-    public function create(array $data)
+    public function createShipment(array $data)
     {
-        try {
-            $payload = ShipmentFullSchemaPayload::build($data, $this->config);
-            $response = $this->client->post('ship/v1/openshipments/create', [
-                'json' => $payload
-            ]);
+        $payload['requestedShipment'] = ShipmentPayloads::build($data);
+        $payload['labelResponseOptions'] = $data['labelResponseOptions'] ?? 'URL_ONLY';
 
-            return ShippingResponse::success($response, function ($data) {
-                return [
-                    'tracking_number' => $data['output']['transactionShipments'][0]['masterTrackingNumber'] ?? null,
-                ];
-            });
-        } catch (RequestException $e) {
-            return ShippingResponse::error($e);
+        if ($data['labelResponseOptions'] == 'LABEL') {
+            $payload['openShipmentAction'] = 'PROVIDE_DOCUMENTS_INCREMENTALLY';
         }
+        return $this->makeRequest('post', '/ship/v1/shipments', $payload);
     }
     //郵遞區號驗證功能會驗證國家/地區與城市的郵遞區號，並會在回應中提供經過驗證的郵遞區號。
     public function validate(array $data)

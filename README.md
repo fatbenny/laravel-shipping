@@ -124,3 +124,5 @@ Route::get('/test-shipping', function () {
 });
 ```
 
+測試：/shipping/index
+![測試畫面](images/建立物流表單.png)
